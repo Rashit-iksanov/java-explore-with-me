@@ -1,0 +1,11 @@
+CREATE TABLE IF NOT EXISTS hits (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    app VARCHAR(255) NOT NULL,
+    uri VARCHAR(512) NOT NULL,
+    ip VARCHAR(45) NOT NULL,
+    hit_timestamp TIMESTAMP WITHOUT TIME ZONE NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_hits_timestamp ON hits (hit_timestamp);
+CREATE INDEX IF NOT EXISTS idx_hits_uri ON hits (uri);
+CREATE INDEX IF NOT EXISTS idx_hits_app ON hits (app);
