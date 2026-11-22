@@ -6,11 +6,10 @@ import org.springframework.web.util.UriComponentsBuilder;
 import ru.practicum.dto.EndpointHit;
 import ru.practicum.dto.ViewStats;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class StatsClient {
@@ -46,6 +45,6 @@ public class StatsClient {
                 builder.build().toUri(),
                 ViewStats[].class);
 
-        return response.getBody() != null ? Arrays.asList(response.getBody()) : List.of();
+        return response.getBody() != null ? Arrays.asList(response.getBody()) : Collections.emptyList();
     }
 }

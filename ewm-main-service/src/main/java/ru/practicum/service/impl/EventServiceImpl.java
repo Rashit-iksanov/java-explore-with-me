@@ -10,6 +10,7 @@ import ru.practicum.client.StatsClient;
 import ru.practicum.dto.EndpointHit;
 import ru.practicum.dto.EventFullDto;
 import ru.practicum.dto.EventShortDto;
+import ru.practicum.dto.LocationDto;
 import ru.practicum.dto.NewEventDto;
 import ru.practicum.dto.UpdateEventAdminRequest;
 import ru.practicum.dto.UpdateEventUserRequest;
@@ -115,7 +116,9 @@ public class EventServiceImpl implements EventService {
             throw new ConflictException("Event date must be at least 2 hours from now");
         }
 
-        updateEventFields(event, request);
+        updateEventFields(event, request.getAnnotation(), request.getDescription(), request.getTitle(),
+                request.getEventDate(), request.getPaid(), request.getParticipantLimit(),
+                request.getRequestModeration(), request.getCategory(), request.getLocation());
 
         if (request.getStateAction() != null) {
             if (request.getStateAction() == StateAction.CANCEL_REVIEW) {
@@ -175,7 +178,10 @@ public class EventServiceImpl implements EventService {
             }
         }
 
-        updateEventFields(event, request);
+        updateEventFields(event, request.getAnnotation(), request.getDescription(), request.getTitle(),
+                request.getEventDate(), request.getPaid(), request.getParticipantLimit(),
+                request.getRequestModeration(), request.getCategory(), request.getLocation());
+
         event = eventRepository.save(event);
 
         Long views = getViews(event);
@@ -222,11 +228,15 @@ public class EventServiceImpl implements EventService {
         }
 
         if (Boolean.TRUE.equals(onlyAvailable)) {
+            Map<Long, Event> eventMap = events.stream()
+                    .collect(Collectors.toMap(Event::getId, e -> e));
+
             result = result.stream()
                     .filter(e -> {
-                        Event event = events.stream().filter(ev -> ev.getId().equals(e.getId()))
-                                .findFirst().orElse(null);
-                        if (event == null || event.getParticipantLimit() == 0) return true;
+                        Event event = eventMap.get(e.getId());
+                        if (event == null || event.getParticipantLimit() == 0) {
+                            return true;
+                        }
                         Long confirmed = confirmedMap.getOrDefault(e.getId(), 0L);
                         return confirmed < event.getParticipantLimit();
                     })
@@ -267,39 +277,25 @@ public class EventServiceImpl implements EventService {
         return EventMapper.toEventFullDto(event, views, confirmed);
     }
 
-    private void updateEventFields(Event event, UpdateEventUserRequest request) {
-        if (request.getAnnotation() != null) event.setAnnotation(request.getAnnotation());
-        if (request.getDescription() != null) event.setDescription(request.getDescription());
-        if (request.getTitle() != null) event.setTitle(request.getTitle());
-        if (request.getEventDate() != null) event.setEventDate(request.getEventDate());
-        if (request.getPaid() != null) event.setPaid(request.getPaid());
-        if (request.getParticipantLimit() != null) event.setParticipantLimit(request.getParticipantLimit());
-        if (request.getRequestModeration() != null) event.setRequestModeration(request.getRequestModeration());
-        if (request.getCategory() != null) {
-            Category category = categoryRepository.findById(request.getCategory())
-                    .orElseThrow(() -> new NotFoundException("Category not found"));
-            event.setCategory(category);
-        }
-        if (request.getLocation() != null) {
-            event.setLocation(LocationMapper.toLocation(request.getLocation()));
-        }
-    }
+    private void updateEventFields(Event event, String annotation, String description, String title,
+                                   LocalDateTime eventDate, Boolean paid, Integer participantLimit,
+                                   Boolean requestModeration, Long categoryId, LocationDto locationDto) {
+        if (annotation != null) event.setAnnotation(annotation);
+        if (description != null) event.setDescription(description);
+        if (title != null) event.setTitle(title);
+        if (eventDate != null) event.setEventDate(eventDate);
+        if (paid != null) event.setPaid(paid);
+        if (participantLimit != null) event.setParticipantLimit(participantLimit);
+        if (requestModeration != null) event.setRequestModeration(requestModeration);
 
-    private void updateEventFields(Event event, UpdateEventAdminRequest request) {
-        if (request.getAnnotation() != null) event.setAnnotation(request.getAnnotation());
-        if (request.getDescription() != null) event.setDescription(request.getDescription());
-        if (request.getTitle() != null) event.setTitle(request.getTitle());
-        if (request.getEventDate() != null) event.setEventDate(request.getEventDate());
-        if (request.getPaid() != null) event.setPaid(request.getPaid());
-        if (request.getParticipantLimit() != null) event.setParticipantLimit(request.getParticipantLimit());
-        if (request.getRequestModeration() != null) event.setRequestModeration(request.getRequestModeration());
-        if (request.getCategory() != null) {
-            Category category = categoryRepository.findById(request.getCategory())
-                    .orElseThrow(() -> new NotFoundException("Category not found"));
+        if (categoryId != null) {
+            Category category = categoryRepository.findById(categoryId)
+                    .orElseThrow(() -> new NotFoundException("Category with id=" + categoryId + " was not found"));
             event.setCategory(category);
         }
-        if (request.getLocation() != null) {
-            event.setLocation(LocationMapper.toLocation(request.getLocation()));
+
+        if (locationDto != null) {
+            event.setLocation(LocationMapper.toLocation(locationDto));
         }
     }
 
