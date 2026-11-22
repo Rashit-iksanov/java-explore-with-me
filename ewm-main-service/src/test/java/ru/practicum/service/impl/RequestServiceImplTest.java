@@ -13,6 +13,7 @@ import ru.practicum.model.Event;
 import ru.practicum.model.Request;
 import ru.practicum.model.User;
 import ru.practicum.model.enums.RequestStatus;
+import ru.practicum.model.enums.State;
 import ru.practicum.repository.EventRepository;
 import ru.practicum.repository.RequestRepository;
 import ru.practicum.repository.UserRepository;
@@ -56,7 +57,9 @@ class RequestServiceImplTest {
         User requester = new User(1L, "Иван", "ivan@mail.ru");
         User initiator = new User(2L, "Петр", "petr@mail.ru");
         Event event = new Event();
+        event.setId(1L);
         event.setInitiator(initiator);
+        event.setState(State.PUBLISHED);
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(requester));
         when(eventRepository.findById(1L)).thenReturn(Optional.of(event));
@@ -74,6 +77,7 @@ class RequestServiceImplTest {
         event.setInitiator(initiator);
         event.setRequestModeration(false);
         event.setParticipantLimit(10);
+        event.setState(State.PUBLISHED);
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(requester));
         when(eventRepository.findById(1L)).thenReturn(Optional.of(event));
@@ -99,6 +103,7 @@ class RequestServiceImplTest {
         event.setInitiator(initiator);
         event.setRequestModeration(true);
         event.setParticipantLimit(2);
+        event.setState(State.PUBLISHED);
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(requester));
         when(eventRepository.findById(1L)).thenReturn(Optional.of(event));
