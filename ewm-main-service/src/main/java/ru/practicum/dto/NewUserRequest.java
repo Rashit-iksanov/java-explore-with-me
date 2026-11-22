@@ -7,18 +7,19 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import ru.practicum.validation.OnCreate;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class NewUserRequest {
-    @NotBlank
-    @Size(min = 2, max = 250)
+    @NotBlank(groups = OnCreate.class)
+    @Size(min = 2, max = 250, groups = OnCreate.class)
     private String name;
 
-    @NotBlank
-    @Email
-    @Size(min = 6, max = 254)
+    @NotBlank(groups = OnCreate.class)
+    @Email(groups = OnCreate.class)
+    @Size(min = 6, max = 254, groups = OnCreate.class)
     private String email;
 }

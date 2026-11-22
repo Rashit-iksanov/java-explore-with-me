@@ -32,8 +32,8 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     // Public API: поиск опубликованных событий с фильтрацией
     @Query("SELECT e FROM Event e " +
             "WHERE e.state = 'PUBLISHED' " +
-            "AND (:text IS NULL OR LOWER(e.annotation) LIKE LOWER(CONCAT('%', :text, '%')) " +
-            "     OR LOWER(e.description) LIKE LOWER(CONCAT('%', :text, '%'))) " +
+            "AND (:text IS NULL OR LOWER(e.annotation) LIKE LOWER('%' || :text || '%') " +
+            "     OR LOWER(e.description) LIKE LOWER('%' || :text || '%')) " +
             "AND (:categories IS NULL OR e.category.id IN :categories) " +
             "AND (:paid IS NULL OR e.paid = :paid) " +
             "AND (:rangeStart IS NULL OR e.eventDate >= :rangeStart) " +

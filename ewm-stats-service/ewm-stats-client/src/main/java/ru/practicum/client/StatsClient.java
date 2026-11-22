@@ -30,7 +30,7 @@ public class StatsClient {
     public List<ViewStats> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(serverUrl + "/stats")
                 .queryParam("start", start.format(FORMATTER))
-                .queryParam("end", start.format(FORMATTER));
+                .queryParam("end", end.format(FORMATTER));
 
         if (uris != null && !uris.isEmpty()) {
             for (String uri : uris) {

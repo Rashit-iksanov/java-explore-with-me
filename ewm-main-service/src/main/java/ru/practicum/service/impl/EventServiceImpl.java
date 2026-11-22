@@ -193,6 +193,8 @@ public class EventServiceImpl implements EventService {
             rangeStart = LocalDateTime.now();
         }
 
+        String searchText = (text != null) ? text.toLowerCase() : null;
+
         Sort sortOrder;
         if ("EVENT_DATE".equals(sort)) {
             sortOrder = Sort.by("eventDate").ascending();
@@ -203,8 +205,9 @@ public class EventServiceImpl implements EventService {
         }
 
         Pageable pageable = PageRequest.of(from / size, size, sortOrder);
-        List<Event> events = eventRepository.findPublishedWithFilters(text, categories, paid, rangeStart,
-                rangeEnd, pageable);
+
+        List<Event> events = eventRepository.findPublishedWithFilters(
+                searchText, categories, paid, rangeStart, rangeEnd, pageable);
         Map<Long, Long> viewsMap = getViewsMap(events);
         Map<Long, Long> confirmedMap = getConfirmedRequestsMap(events);
 

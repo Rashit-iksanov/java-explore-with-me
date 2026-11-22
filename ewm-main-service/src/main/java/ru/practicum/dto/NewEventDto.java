@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import ru.practicum.validation.OnCreate;
 
 import java.time.LocalDateTime;
 
@@ -16,29 +17,29 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class NewEventDto {
-    @NotBlank
-    @Size(min = 20, max = 2000)
+    @NotBlank(groups = OnCreate.class)
+    @Size(min = 20, max = 2000, groups = OnCreate.class)
     private String annotation;
 
-    @NotNull
+    @NotNull(groups = OnCreate.class)
     private Long category;
 
-    @NotBlank
-    @Size(min = 20, max = 7000)
+    @NotBlank(groups = OnCreate.class)
+    @Size(min = 20, max = 7000,groups = OnCreate.class)
     private String description;
 
-    @NotNull
+    @NotNull(groups = OnCreate.class)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime eventDate;
 
-    @NotNull
+    @NotNull(groups = OnCreate.class)
     private LocationDto location;
 
     private Boolean paid = false;
     private Integer participantLimit = 0;
     private Boolean requestModeration = true;
 
-    @NotBlank
-    @Size(min = 3, max = 120)
+    @NotBlank(groups = OnCreate.class)
+    @Size(min = 3, max = 120, groups = OnCreate.class)
     private String title;
 }
