@@ -1,15 +1,16 @@
 package ru.practicum.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.client.StatsClient;
 import ru.practicum.dto.EndpointHit;
 import ru.practicum.dto.EventFullDto;
 import ru.practicum.dto.EventShortDto;
+import ru.practicum.dto.LocationDto;
 import ru.practicum.dto.NewEventDto;
 import ru.practicum.dto.UpdateEventAdminRequest;
 import ru.practicum.dto.UpdateEventUserRequest;
@@ -17,6 +18,7 @@ import ru.practicum.dto.ViewStats;
 import ru.practicum.dto.enums.StateAction;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
+import ru.practicum.exception.ValidationException;
 import ru.practicum.mapper.EventMapper;
 import ru.practicum.mapper.LocationMapper;
 import ru.practicum.model.Category;
@@ -32,12 +34,14 @@ import ru.practicum.service.EventService;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -59,7 +63,7 @@ public class EventServiceImpl implements EventService {
                 .orElseThrow(() -> new NotFoundException("Category with id=" + dto.getCategory() + " was not found"));
 
         if (dto.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
-            throw new ConflictException("Event date must be at least 2 hours from now");
+            throw new ValidationException("Event date must be at least 2 hours from now");
         }
 
         Event event = EventMapper.toEvent(dto, initiator, category);
@@ -112,10 +116,12 @@ public class EventServiceImpl implements EventService {
         }
 
         if (request.getEventDate() != null && request.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
-            throw new ConflictException("Event date must be at least 2 hours from now");
+            throw new ValidationException("Event date must be at least 2 hours from now");
         }
 
-        updateEventFields(event, request);
+        updateEventFields(event, request.getAnnotation(), request.getDescription(), request.getTitle(),
+                request.getEventDate(), request.getPaid(), request.getParticipantLimit(),
+                request.getRequestModeration(), request.getCategory(), request.getLocation());
 
         if (request.getStateAction() != null) {
             if (request.getStateAction() == StateAction.CANCEL_REVIEW) {
@@ -136,6 +142,10 @@ public class EventServiceImpl implements EventService {
     public List<EventFullDto> getAdminEvents(List<Long> users, List<State> states, List<Long> categories,
                                              LocalDateTime rangeStart, LocalDateTime rangeEnd,
                                              Integer from, Integer size) {
+        if (users != null && users.isEmpty()) users = null;
+        if (states != null && states.isEmpty()) states = null;
+        if (categories != null && categories.isEmpty()) categories = null;
+
         Pageable pageable = PageRequest.of(from / size, size);
         List<Event> events = eventRepository.findAllWithFilters(users, states, categories, rangeStart,
                 rangeEnd, pageable);
@@ -163,7 +173,7 @@ public class EventServiceImpl implements EventService {
                 }
                 if (request.getEventDate() != null && request.getEventDate()
                         .isBefore(LocalDateTime.now().plusHours(1))) {
-                    throw new ConflictException("Event date must be at least 1 hour from now");
+                    throw new ValidationException("Event date must be at least 1 hour from now");
                 }
                 event.setState(State.PUBLISHED);
                 event.setPublishedOn(LocalDateTime.now());
@@ -175,7 +185,10 @@ public class EventServiceImpl implements EventService {
             }
         }
 
-        updateEventFields(event, request);
+        updateEventFields(event, request.getAnnotation(), request.getDescription(), request.getTitle(),
+                request.getEventDate(), request.getPaid(), request.getParticipantLimit(),
+                request.getRequestModeration(), request.getCategory(), request.getLocation());
+
         event = eventRepository.save(event);
 
         Long views = getViews(event);
@@ -189,25 +202,18 @@ public class EventServiceImpl implements EventService {
                                                LocalDateTime rangeStart, LocalDateTime rangeEnd,
                                                Boolean onlyAvailable, String sort, Integer from, Integer size,
                                                String ip, String uri) {
+        if (categories != null && categories.isEmpty()) {
+            categories = null;
+        }
+
         if (rangeStart == null) {
             rangeStart = LocalDateTime.now();
         }
 
         String searchText = (text != null) ? text.toLowerCase() : null;
 
-        Sort sortOrder;
-        if ("EVENT_DATE".equals(sort)) {
-            sortOrder = Sort.by("eventDate").ascending();
-        } else if ("VIEWS".equals(sort)) {
-            sortOrder = Sort.unsorted();
-        } else {
-            sortOrder = Sort.by("eventDate").ascending();
-        }
-
-        Pageable pageable = PageRequest.of(from / size, size, sortOrder);
-
         List<Event> events = eventRepository.findPublishedWithFilters(
-                searchText, categories, paid, rangeStart, rangeEnd, pageable);
+                searchText, categories, paid, rangeStart, rangeEnd, Pageable.unpaged());
         Map<Long, Long> viewsMap = getViewsMap(events);
         Map<Long, Long> confirmedMap = getConfirmedRequestsMap(events);
 
@@ -219,19 +225,28 @@ public class EventServiceImpl implements EventService {
 
         if ("VIEWS".equals(sort)) {
             result.sort((a, b) -> Long.compare(b.getViews(), a.getViews()));
+        } else {
+            result.sort(Comparator.comparing(EventShortDto::getEventDate));
         }
 
         if (Boolean.TRUE.equals(onlyAvailable)) {
+            Map<Long, Event> eventMap = events.stream()
+                    .collect(Collectors.toMap(Event::getId, e -> e));
+
             result = result.stream()
                     .filter(e -> {
-                        Event event = events.stream().filter(ev -> ev.getId().equals(e.getId()))
-                                .findFirst().orElse(null);
-                        if (event == null || event.getParticipantLimit() == 0) return true;
+                        Event event = eventMap.get(e.getId());
+                        if (event == null || event.getParticipantLimit() == 0) {
+                            return true;
+                        }
                         Long confirmed = confirmedMap.getOrDefault(e.getId(), 0L);
                         return confirmed < event.getParticipantLimit();
                     })
                     .collect(Collectors.toList());
         }
+
+        int fromIndex = Math.min(from, result.size());
+        int toIndex = Math.min(from + size, result.size());
 
         try {
             EndpointHit hit = new EndpointHit();
@@ -241,9 +256,11 @@ public class EventServiceImpl implements EventService {
             hit.setTimestamp(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
             statsClient.postHit(hit);
         } catch (Exception e) {
+            // Игнорируем ошибки статистики
+            log.warn("Failed to send hit to stats service for URI: {}", uri, e);
         }
 
-        return result;
+        return result.subList(fromIndex, toIndex);
     }
 
     @Override
@@ -259,6 +276,8 @@ public class EventServiceImpl implements EventService {
             hit.setTimestamp(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
             statsClient.postHit(hit);
         } catch (Exception e) {
+            // Игнорируем ошибки статистики
+            log.warn("Failed to send hit to stats service for URI: {}", uri, e);
         }
 
         Long views = getViews(event);
@@ -267,39 +286,25 @@ public class EventServiceImpl implements EventService {
         return EventMapper.toEventFullDto(event, views, confirmed);
     }
 
-    private void updateEventFields(Event event, UpdateEventUserRequest request) {
-        if (request.getAnnotation() != null) event.setAnnotation(request.getAnnotation());
-        if (request.getDescription() != null) event.setDescription(request.getDescription());
-        if (request.getTitle() != null) event.setTitle(request.getTitle());
-        if (request.getEventDate() != null) event.setEventDate(request.getEventDate());
-        if (request.getPaid() != null) event.setPaid(request.getPaid());
-        if (request.getParticipantLimit() != null) event.setParticipantLimit(request.getParticipantLimit());
-        if (request.getRequestModeration() != null) event.setRequestModeration(request.getRequestModeration());
-        if (request.getCategory() != null) {
-            Category category = categoryRepository.findById(request.getCategory())
-                    .orElseThrow(() -> new NotFoundException("Category not found"));
-            event.setCategory(category);
-        }
-        if (request.getLocation() != null) {
-            event.setLocation(LocationMapper.toLocation(request.getLocation()));
-        }
-    }
+    private void updateEventFields(Event event, String annotation, String description, String title,
+                                   LocalDateTime eventDate, Boolean paid, Integer participantLimit,
+                                   Boolean requestModeration, Long categoryId, LocationDto locationDto) {
+        if (annotation != null) event.setAnnotation(annotation);
+        if (description != null) event.setDescription(description);
+        if (title != null) event.setTitle(title);
+        if (eventDate != null) event.setEventDate(eventDate);
+        if (paid != null) event.setPaid(paid);
+        if (participantLimit != null) event.setParticipantLimit(participantLimit);
+        if (requestModeration != null) event.setRequestModeration(requestModeration);
 
-    private void updateEventFields(Event event, UpdateEventAdminRequest request) {
-        if (request.getAnnotation() != null) event.setAnnotation(request.getAnnotation());
-        if (request.getDescription() != null) event.setDescription(request.getDescription());
-        if (request.getTitle() != null) event.setTitle(request.getTitle());
-        if (request.getEventDate() != null) event.setEventDate(request.getEventDate());
-        if (request.getPaid() != null) event.setPaid(request.getPaid());
-        if (request.getParticipantLimit() != null) event.setParticipantLimit(request.getParticipantLimit());
-        if (request.getRequestModeration() != null) event.setRequestModeration(request.getRequestModeration());
-        if (request.getCategory() != null) {
-            Category category = categoryRepository.findById(request.getCategory())
-                    .orElseThrow(() -> new NotFoundException("Category not found"));
+        if (categoryId != null) {
+            Category category = categoryRepository.findById(categoryId)
+                    .orElseThrow(() -> new NotFoundException("Category with id=" + categoryId + " was not found"));
             event.setCategory(category);
         }
-        if (request.getLocation() != null) {
-            event.setLocation(LocationMapper.toLocation(request.getLocation()));
+
+        if (locationDto != null) {
+            event.setLocation(LocationMapper.toLocation(locationDto));
         }
     }
 

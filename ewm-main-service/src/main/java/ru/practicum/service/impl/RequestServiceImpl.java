@@ -13,6 +13,7 @@ import ru.practicum.model.Event;
 import ru.practicum.model.Request;
 import ru.practicum.model.User;
 import ru.practicum.model.enums.RequestStatus;
+import ru.practicum.model.enums.State;
 import ru.practicum.repository.EventRepository;
 import ru.practicum.repository.RequestRepository;
 import ru.practicum.repository.UserRepository;
@@ -41,6 +42,10 @@ public class RequestServiceImpl implements RequestService {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Event with id=" + eventId + " was not found"));
 
+        if (event.getState() != State.PUBLISHED) {
+            throw new ConflictException("Cannot participate in unpublished event");
+        }
+
         if (event.getInitiator().getId().equals(userId)) {
             throw new ConflictException("Cannot create request for own event");
         }
@@ -59,7 +64,7 @@ public class RequestServiceImpl implements RequestService {
         request.setRequester(requester);
         request.setEvent(event);
 
-        if (event.getRequestModeration() == null || !event.getRequestModeration()) {
+        if (event.getParticipantLimit() == 0 || !event.getRequestModeration()) {
             request.setStatus(RequestStatus.CONFIRMED);
         } else {
             request.setStatus(RequestStatus.PENDING);
@@ -103,7 +108,8 @@ public class RequestServiceImpl implements RequestService {
 
     @Override
     @Transactional
-    public EventRequestStatusUpdateResult updateRequestStatus(Long userId, Long eventId, EventRequestStatusUpdateRequest request) {
+    public EventRequestStatusUpdateResult updateRequestStatus(Long userId, Long eventId,
+                                                              EventRequestStatusUpdateRequest request) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Event with id=" + eventId + " was not found"));
 
@@ -112,7 +118,6 @@ public class RequestServiceImpl implements RequestService {
         }
 
         List<Request> requests = requestRepository.findByIds(request.getRequestIds());
-
         Long confirmedCount = requestRepository.countConfirmedByEventId(eventId);
         int availableSlots = event.getParticipantLimit() > 0
                 ? (int) (event.getParticipantLimit() - confirmedCount)
@@ -140,6 +145,17 @@ public class RequestServiceImpl implements RequestService {
             } else {
                 req.setStatus(RequestStatus.REJECTED);
                 rejectedRequests.add(RequestMapper.toRequestDto(req));
+            }
+        }
+
+        if (newStatus == RequestStatus.CONFIRMED && availableSlots == 0) {
+            List<Request> allOtherPending = requestRepository.findByEventIdAndStatus(eventId, RequestStatus.PENDING);
+            for (Request pendingReq : allOtherPending) {
+                pendingReq.setStatus(RequestStatus.REJECTED);
+                rejectedRequests.add(RequestMapper.toRequestDto(pendingReq));
+            }
+            if (!allOtherPending.isEmpty()) {
+                requestRepository.saveAll(allOtherPending);
             }
         }
 

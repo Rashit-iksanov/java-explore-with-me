@@ -1,5 +1,6 @@
 package ru.practicum.controller.private_;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
@@ -60,7 +61,7 @@ public class PrivateEventController {
     public EventFullDto updateUserEvent(
             @PathVariable Long userId,
             @PathVariable Long eventId,
-            @RequestBody UpdateEventUserRequest request) {
+            @Valid @RequestBody UpdateEventUserRequest request) {
         return eventService.updateUserEvent(userId, eventId, request);
     }
 
@@ -75,7 +76,7 @@ public class PrivateEventController {
     public EventRequestStatusUpdateResult updateRequestStatus(
             @PathVariable Long userId,
             @PathVariable Long eventId,
-            @RequestBody EventRequestStatusUpdateRequest request) {
+            @Valid @RequestBody EventRequestStatusUpdateRequest request) {
         return requestService.updateRequestStatus(userId, eventId, request);
     }
 }

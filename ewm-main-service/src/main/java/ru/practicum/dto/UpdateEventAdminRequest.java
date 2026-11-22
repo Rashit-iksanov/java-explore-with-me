@@ -1,6 +1,7 @@
 package ru.practicum.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,6 +24,8 @@ public class UpdateEventAdminRequest {
 
     private LocationDto location;
     private Boolean paid;
+
+    @Min(value = 0, message = "participantLimit must be >= 0")
     private Integer participantLimit;
     private Boolean requestModeration;
     private StateAction stateAction;
