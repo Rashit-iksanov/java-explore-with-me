@@ -25,7 +25,7 @@ public class NewEventDto {
     private Long category;
 
     @NotBlank(groups = OnCreate.class)
-    @Size(min = 20, max = 7000,groups = OnCreate.class)
+    @Size(min = 20, max = 7000, groups = OnCreate.class)
     private String description;
 
     @NotNull(groups = OnCreate.class)

@@ -37,11 +37,16 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class EventServiceImplTest {
 
-    @Mock private EventRepository eventRepository;
-    @Mock private UserRepository userRepository;
-    @Mock private CategoryRepository categoryRepository;
-    @Mock private RequestRepository requestRepository;
-    @Mock private StatsClient statsClient;
+    @Mock
+    private EventRepository eventRepository;
+    @Mock
+    private UserRepository userRepository;
+    @Mock
+    private CategoryRepository categoryRepository;
+    @Mock
+    private RequestRepository requestRepository;
+    @Mock
+    private StatsClient statsClient;
 
     @InjectMocks
     private EventServiceImpl eventService;
