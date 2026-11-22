@@ -3,7 +3,6 @@ package ru.practicum.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.client.StatsClient;
@@ -33,6 +32,7 @@ import ru.practicum.service.EventService;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -201,19 +201,8 @@ public class EventServiceImpl implements EventService {
 
         String searchText = (text != null) ? text.toLowerCase() : null;
 
-        Sort sortOrder;
-        if ("EVENT_DATE".equals(sort)) {
-            sortOrder = Sort.by("eventDate").ascending();
-        } else if ("VIEWS".equals(sort)) {
-            sortOrder = Sort.unsorted();
-        } else {
-            sortOrder = Sort.by("eventDate").ascending();
-        }
-
-        Pageable pageable = PageRequest.of(from / size, size, sortOrder);
-
         List<Event> events = eventRepository.findPublishedWithFilters(
-                searchText, categories, paid, rangeStart, rangeEnd, pageable);
+                searchText, categories, paid, rangeStart, rangeEnd, Pageable.unpaged());
         Map<Long, Long> viewsMap = getViewsMap(events);
         Map<Long, Long> confirmedMap = getConfirmedRequestsMap(events);
 
@@ -225,6 +214,8 @@ public class EventServiceImpl implements EventService {
 
         if ("VIEWS".equals(sort)) {
             result.sort((a, b) -> Long.compare(b.getViews(), a.getViews()));
+        } else {
+            result.sort(Comparator.comparing(EventShortDto::getEventDate));
         }
 
         if (Boolean.TRUE.equals(onlyAvailable)) {
@@ -243,6 +234,9 @@ public class EventServiceImpl implements EventService {
                     .collect(Collectors.toList());
         }
 
+        int fromIndex = Math.min(from, result.size());
+        int toIndex = Math.min(from + size, result.size());
+
         try {
             EndpointHit hit = new EndpointHit();
             hit.setApp("ewm-main-service");
@@ -251,9 +245,10 @@ public class EventServiceImpl implements EventService {
             hit.setTimestamp(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
             statsClient.postHit(hit);
         } catch (Exception e) {
+            // Игнорируем ошибки статистики
         }
 
-        return result;
+        return result.subList(fromIndex, toIndex);
     }
 
     @Override
@@ -269,6 +264,7 @@ public class EventServiceImpl implements EventService {
             hit.setTimestamp(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
             statsClient.postHit(hit);
         } catch (Exception e) {
+            // Игнорируем ошибки статистики
         }
 
         Long views = getViews(event);

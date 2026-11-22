@@ -116,7 +116,7 @@ class RequestServiceImplTest {
         event.setInitiator(initiator);
         event.setParticipantLimit(5);
 
-        User requestor = new User(2l, "Петр", "petr@mail.ru");
+        User requestor = new User(2L, "Петр", "petr@mail.ru");
 
         Request request = new Request();
         request.setId(10L);
