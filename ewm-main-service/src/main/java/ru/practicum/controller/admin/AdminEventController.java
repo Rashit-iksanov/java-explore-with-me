@@ -1,6 +1,5 @@
 package ru.practicum.controller.admin;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.validation.annotation.Validated;
@@ -15,7 +14,6 @@ import ru.practicum.dto.EventFullDto;
 import ru.practicum.dto.UpdateEventAdminRequest;
 import ru.practicum.model.enums.State;
 import ru.practicum.service.EventService;
-import ru.practicum.validation.OnCreate;
 import ru.practicum.validation.OnUpdate;
 
 import java.time.LocalDateTime;
