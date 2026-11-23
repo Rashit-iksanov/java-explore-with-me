@@ -79,7 +79,7 @@ public class CompilationServiceImpl implements CompilationService {
     @Transactional
     public CompilationDto updateCompilation(Long compId, UpdateCompilationRequest request) {
         Compilation compilation = compilationRepository.findByIdWithEvents(compId)
-                .orElseThrow(() -> new NotFoundException("Compilation with id=" + compId + " was not found"));
+                .orElseThrow(() -> new NotFoundException("Compilation with id= " + compId + " was not found"));
 
         if (request.getTitle() != null) {
             compilation.setTitle(request.getTitle());
