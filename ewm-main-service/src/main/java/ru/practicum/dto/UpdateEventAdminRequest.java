@@ -25,7 +25,7 @@ public class UpdateEventAdminRequest {
     private LocationDto location;
     private Boolean paid;
 
-    @Min(0)
+    @Min(value = 0, message = "participantLimit must be >= 0")
     private Integer participantLimit;
     private Boolean requestModeration;
     private StateAction stateAction;

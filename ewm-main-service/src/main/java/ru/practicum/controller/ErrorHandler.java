@@ -11,6 +11,8 @@ import ru.practicum.dto.ApiError;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.exception.ValidationException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -96,6 +98,30 @@ public class ErrorHandler {
         return new ApiError(
                 HttpStatus.BAD_REQUEST.name(),
                 "Некорректно составленный запрос.",
+                e.getMessage(),
+                Collections.emptyList()
+        );
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleMissingServletRequestParameter(final MissingServletRequestParameterException e) {
+        log.warn("400 {}", e.getMessage(), e);
+        return new ApiError(
+                HttpStatus.BAD_REQUEST.name(),
+                "Incorrectly made request.",
+                e.getMessage(),
+                Collections.emptyList()
+        );
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleMethodArgumentTypeMismatch(final MethodArgumentTypeMismatchException e) {
+        log.warn("400 {}", e.getMessage(), e);
+        return new ApiError(
+                HttpStatus.BAD_REQUEST.name(),
+                "Incorrectly made request.",
                 e.getMessage(),
                 Collections.emptyList()
         );

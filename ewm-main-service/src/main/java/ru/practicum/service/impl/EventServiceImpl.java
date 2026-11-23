@@ -142,6 +142,10 @@ public class EventServiceImpl implements EventService {
     public List<EventFullDto> getAdminEvents(List<Long> users, List<State> states, List<Long> categories,
                                              LocalDateTime rangeStart, LocalDateTime rangeEnd,
                                              Integer from, Integer size) {
+        if (users != null && users.isEmpty()) users = null;
+        if (states != null && states.isEmpty()) states = null;
+        if (categories != null && categories.isEmpty()) categories = null;
+
         Pageable pageable = PageRequest.of(from / size, size);
         List<Event> events = eventRepository.findAllWithFilters(users, states, categories, rangeStart,
                 rangeEnd, pageable);
@@ -198,6 +202,10 @@ public class EventServiceImpl implements EventService {
                                                LocalDateTime rangeStart, LocalDateTime rangeEnd,
                                                Boolean onlyAvailable, String sort, Integer from, Integer size,
                                                String ip, String uri) {
+        if (categories != null && categories.isEmpty()) {
+            categories = null;
+        }
+
         if (rangeStart == null) {
             rangeStart = LocalDateTime.now();
         }

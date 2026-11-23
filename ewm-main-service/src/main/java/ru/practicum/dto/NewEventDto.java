@@ -38,7 +38,7 @@ public class NewEventDto {
 
     private Boolean paid = false;
 
-    @Min(0)
+    @Min(value = 0, message = "participantLimit must be >= 0")
     private Integer participantLimit = 0;
     private Boolean requestModeration = true;
 

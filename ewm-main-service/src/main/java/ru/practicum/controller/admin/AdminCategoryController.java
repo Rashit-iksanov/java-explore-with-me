@@ -1,5 +1,6 @@
 package ru.practicum.controller.admin;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
@@ -15,7 +16,6 @@ import ru.practicum.dto.CategoryDto;
 import ru.practicum.dto.NewCategoryDto;
 import ru.practicum.service.CategoryService;
 import ru.practicum.validation.OnCreate;
-import ru.practicum.validation.OnUpdate;
 
 @RestController
 @RequestMapping("/admin/categories")
@@ -31,7 +31,7 @@ public class AdminCategoryController {
     }
 
     @PatchMapping("/{catId}")
-    public CategoryDto updateCategory(@PathVariable Long catId, @Validated(OnUpdate.class) @RequestBody CategoryDto dto) {
+    public CategoryDto updateCategory(@PathVariable Long catId, @Valid @RequestBody CategoryDto dto) {
         return categoryService.updateCategory(catId, dto);
     }
 
