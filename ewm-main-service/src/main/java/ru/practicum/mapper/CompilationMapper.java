@@ -6,8 +6,10 @@ import ru.practicum.dto.NewCompilationDto;
 import ru.practicum.model.Compilation;
 import ru.practicum.model.Event;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class CompilationMapper {
@@ -28,7 +30,9 @@ public class CompilationMapper {
         dto.setTitle(compilation.getTitle());
         dto.setPinned(compilation.getPinned());
 
-        List<EventShortDto> eventDtos = compilation.getEvents().stream()
+        Set<Event> events = compilation.getEvents() != null ? compilation.getEvents() : Collections.emptySet();
+
+        List<EventShortDto> eventDtos = events.stream()
                 .map(event -> EventMapper.toEventShortDto(event,
                         viewsMap.getOrDefault(event.getId(), 0L),
                         confirmedMap.getOrDefault(event.getId(), 0L)

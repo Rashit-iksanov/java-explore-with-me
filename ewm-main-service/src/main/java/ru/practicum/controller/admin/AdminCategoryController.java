@@ -15,6 +15,7 @@ import ru.practicum.dto.CategoryDto;
 import ru.practicum.dto.NewCategoryDto;
 import ru.practicum.service.CategoryService;
 import ru.practicum.validation.OnCreate;
+import ru.practicum.validation.OnUpdate;
 
 @RestController
 @RequestMapping("/admin/categories")
@@ -30,7 +31,7 @@ public class AdminCategoryController {
     }
 
     @PatchMapping("/{catId}")
-    public CategoryDto updateCategory(@PathVariable Long catId, @RequestBody CategoryDto dto) {
+    public CategoryDto updateCategory(@PathVariable Long catId, @Validated(OnUpdate.class) @RequestBody CategoryDto dto) {
         return categoryService.updateCategory(catId, dto);
     }
 

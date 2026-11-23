@@ -13,6 +13,7 @@ import ru.practicum.dto.UpdateEventUserRequest;
 import ru.practicum.dto.enums.StateAction;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
+import ru.practicum.exception.ValidationException;
 import ru.practicum.model.Category;
 import ru.practicum.model.Event;
 import ru.practicum.model.User;
@@ -61,7 +62,7 @@ class EventServiceImplTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(new User(1L, "Иван", "ivan@mail.ru")));
         when(categoryRepository.findById(1L)).thenReturn(Optional.of(new Category(1L, "Концерты")));
 
-        assertThrows(ConflictException.class, () -> eventService.createEvent(1L, dto));
+        assertThrows(ValidationException.class, () -> eventService.createEvent(1L, dto));
     }
 
     @Test

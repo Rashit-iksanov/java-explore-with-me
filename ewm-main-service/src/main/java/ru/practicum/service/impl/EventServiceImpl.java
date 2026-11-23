@@ -1,6 +1,8 @@
 package ru.practicum.service.impl;
 
+import jakarta.validation.executable.ValidateOnExecution;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -17,6 +19,7 @@ import ru.practicum.dto.ViewStats;
 import ru.practicum.dto.enums.StateAction;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
+import ru.practicum.exception.ValidationException;
 import ru.practicum.mapper.EventMapper;
 import ru.practicum.mapper.LocationMapper;
 import ru.practicum.model.Category;
@@ -39,6 +42,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -60,7 +64,7 @@ public class EventServiceImpl implements EventService {
                 .orElseThrow(() -> new NotFoundException("Category with id=" + dto.getCategory() + " was not found"));
 
         if (dto.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
-            throw new ConflictException("Event date must be at least 2 hours from now");
+            throw new ValidationException("Event date must be at least 2 hours from now");
         }
 
         Event event = EventMapper.toEvent(dto, initiator, category);
@@ -113,7 +117,7 @@ public class EventServiceImpl implements EventService {
         }
 
         if (request.getEventDate() != null && request.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
-            throw new ConflictException("Event date must be at least 2 hours from now");
+            throw new ValidationException("Event date must be at least 2 hours from now");
         }
 
         updateEventFields(event, request.getAnnotation(), request.getDescription(), request.getTitle(),
@@ -166,7 +170,7 @@ public class EventServiceImpl implements EventService {
                 }
                 if (request.getEventDate() != null && request.getEventDate()
                         .isBefore(LocalDateTime.now().plusHours(1))) {
-                    throw new ConflictException("Event date must be at least 1 hour from now");
+                    throw new ValidationException("Event date must be at least 1 hour from now");
                 }
                 event.setState(State.PUBLISHED);
                 event.setPublishedOn(LocalDateTime.now());
@@ -246,6 +250,7 @@ public class EventServiceImpl implements EventService {
             statsClient.postHit(hit);
         } catch (Exception e) {
             // Игнорируем ошибки статистики
+            log.warn("Failed to send hit to stats service for URI: {}", uri, e);
         }
 
         return result.subList(fromIndex, toIndex);
@@ -265,6 +270,7 @@ public class EventServiceImpl implements EventService {
             statsClient.postHit(hit);
         } catch (Exception e) {
             // Игнорируем ошибки статистики
+            log.warn("Failed to send hit to stats service for URI: {}", uri, e);
         }
 
         Long views = getViews(event);

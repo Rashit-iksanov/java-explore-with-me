@@ -64,7 +64,7 @@ public class RequestServiceImpl implements RequestService {
         request.setRequester(requester);
         request.setEvent(event);
 
-        if (event.getRequestModeration() == null || !event.getRequestModeration()) {
+        if (event.getParticipantLimit() == 0 || !event.getRequestModeration()) {
             request.setStatus(RequestStatus.CONFIRMED);
         } else {
             request.setStatus(RequestStatus.PENDING);
@@ -118,7 +118,6 @@ public class RequestServiceImpl implements RequestService {
         }
 
         List<Request> requests = requestRepository.findByIds(request.getRequestIds());
-
         Long confirmedCount = requestRepository.countConfirmedByEventId(eventId);
         int availableSlots = event.getParticipantLimit() > 0
                 ? (int) (event.getParticipantLimit() - confirmedCount)
@@ -146,6 +145,17 @@ public class RequestServiceImpl implements RequestService {
             } else {
                 req.setStatus(RequestStatus.REJECTED);
                 rejectedRequests.add(RequestMapper.toRequestDto(req));
+            }
+        }
+
+        if (newStatus == RequestStatus.CONFIRMED && availableSlots == 0) {
+            List<Request> allOtherPending = requestRepository.findByEventIdAndStatus(eventId, RequestStatus.PENDING);
+            for (Request pendingReq : allOtherPending) {
+                pendingReq.setStatus(RequestStatus.REJECTED);
+                rejectedRequests.add(RequestMapper.toRequestDto(pendingReq));
+            }
+            if (!allOtherPending.isEmpty()) {
+                requestRepository.saveAll(allOtherPending);
             }
         }
 
