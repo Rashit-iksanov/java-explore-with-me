@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.client.StatsClient;
@@ -215,7 +216,18 @@ public class EventServiceImpl implements EventService {
             rangeStart = LocalDateTime.now();
         }
 
-        String searchText = (text != null && !text.isBlank()) ? text.toLowerCase() : null;
+        String searchText = (text != null) ? text.toLowerCase() : null;
+
+        Sort sortOrder;
+        if ("EVENT_DATE".equals(sort)) {
+            sortOrder = Sort.by("eventDate").ascending();
+        } else if ("VIEWS".equals(sort)) {
+            sortOrder = Sort.unsorted();
+        } else {
+            sortOrder = Sort.by("eventDate").ascending();
+        }
+
+        Pageable pageable = PageRequest.of(from / size, size, sortOrder);
 
         List<Event> events = eventRepository.findPublishedWithFilters(
                 searchText, categories, paid, rangeStart, rangeEnd, Pageable.unpaged());
