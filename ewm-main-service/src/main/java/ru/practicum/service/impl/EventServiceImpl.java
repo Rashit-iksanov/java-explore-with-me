@@ -74,7 +74,12 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<EventShortDto> getUserEvents(Long userId, Integer from, Integer size) {
-        Pageable pageable = PageRequest.of(from / size, size);
+
+        int safeSize = (size != null && size > 0) ? size : 10;
+        int safeFrom = (from != null && from >= 0) ? from : 0;
+
+        Pageable pageable = PageRequest.of(safeFrom / safeSize, safeSize);
+
         List<Event> events = eventRepository.findByInitiatorId(userId, pageable);
         Map<Long, Long> viewsMap = getViewsMap(events);
         Map<Long, Long> confirmedMap = getConfirmedRequestsMap(events);
@@ -210,7 +215,7 @@ public class EventServiceImpl implements EventService {
             rangeStart = LocalDateTime.now();
         }
 
-        String searchText = (text != null) ? text.toLowerCase() : null;
+        String searchText = (text != null && !text.isBlank()) ? text.toLowerCase() : null;
 
         List<Event> events = eventRepository.findPublishedWithFilters(
                 searchText, categories, paid, rangeStart, rangeEnd, Pageable.unpaged());
@@ -247,6 +252,10 @@ public class EventServiceImpl implements EventService {
 
         int fromIndex = Math.min(from, result.size());
         int toIndex = Math.min(from + size, result.size());
+
+        if (fromIndex >= toIndex) {
+            return Collections.emptyList();
+        }
 
         try {
             EndpointHit hit = new EndpointHit();

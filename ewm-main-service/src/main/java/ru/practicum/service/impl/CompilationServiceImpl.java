@@ -54,7 +54,12 @@ public class CompilationServiceImpl implements CompilationService {
 
     @Override
     public List<CompilationDto> getCompilations(Boolean pinned, Integer from, Integer size) {
-        Pageable pageable = PageRequest.of(from / size, size);
+
+        int safeSize = (size != null && size > 0) ? size : 10;
+        int safeFrom = (from != null && from >= 0) ? from : 0;
+
+        Pageable pageable = PageRequest.of(safeFrom / safeSize, safeSize);
+
         return compilationRepository.findAllWithFilters(pinned, pageable).stream()
                 .map(comp -> {
                     Map<Long, Long> viewsMap = getViewsMap(comp.getEvents());

@@ -39,7 +39,12 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public List<CategoryDto> getCategories(Integer from, Integer size) {
-        Pageable pageable = PageRequest.of(from / size, size);
+
+        int safeSize = (size != null && size > 0) ? size : 10;
+        int safeFrom = (from != null && from >= 0) ? from : 0;
+
+        Pageable pageable = PageRequest.of(safeFrom / safeSize, safeSize);
+
         return categoryRepository.findAllBy(pageable).stream()
                 .map(CategoryMapper::toCategoryDto)
                 .collect(Collectors.toList());
