@@ -148,6 +148,13 @@ public class EventServiceImpl implements EventService {
     public List<EventFullDto> getAdminEvents(List<Long> users, List<State> states, List<Long> categories,
                                              LocalDateTime rangeStart, LocalDateTime rangeEnd,
                                              Integer from, Integer size) {
+        if (rangeStart == null) {
+            rangeStart = LocalDateTime.now().minusYears(1);
+        }
+        if (rangeEnd == null) {
+            rangeEnd = LocalDateTime.now().plusYears(10);
+        }
+
         if (users != null && users.isEmpty()) users = null;
         if (states != null && states.isEmpty()) states = null;
         if (categories != null && categories.isEmpty()) categories = null;
@@ -208,29 +215,23 @@ public class EventServiceImpl implements EventService {
                                                LocalDateTime rangeStart, LocalDateTime rangeEnd,
                                                Boolean onlyAvailable, String sort, Integer from, Integer size,
                                                String ip, String uri) {
-        if (categories != null && categories.isEmpty()) {
-            categories = null;
-        }
 
         if (rangeStart == null) {
             rangeStart = LocalDateTime.now();
         }
-
-        String searchText = (text != null) ? text.toLowerCase() : null;
-
-        Sort sortOrder;
-        if ("EVENT_DATE".equals(sort)) {
-            sortOrder = Sort.by("eventDate").ascending();
-        } else if ("VIEWS".equals(sort)) {
-            sortOrder = Sort.unsorted();
-        } else {
-            sortOrder = Sort.by("eventDate").ascending();
+        if (rangeEnd == null) {
+            rangeEnd = LocalDateTime.now().plusYears(10);
         }
 
-        Pageable pageable = PageRequest.of(from / size, size, sortOrder);
+        if (categories != null && categories.isEmpty()) {
+            categories = null;
+        }
+
+        String searchText = (text != null && !text.isBlank()) ? text.toLowerCase() : null;
 
         List<Event> events = eventRepository.findPublishedWithFilters(
                 searchText, categories, paid, rangeStart, rangeEnd, Pageable.unpaged());
+
         Map<Long, Long> viewsMap = getViewsMap(events);
         Map<Long, Long> confirmedMap = getConfirmedRequestsMap(events);
 

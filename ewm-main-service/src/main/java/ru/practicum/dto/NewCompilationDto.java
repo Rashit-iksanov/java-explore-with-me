@@ -24,7 +24,7 @@ public class NewCompilationDto {
      * Пример: Летние концерты
      */
     @NotBlank(groups = OnCreate.class)
-    @Size(min = 1, max = 50)
+    @Size(min = 1, max = 50, groups = OnCreate.class)
     private String title;
 
     /**
