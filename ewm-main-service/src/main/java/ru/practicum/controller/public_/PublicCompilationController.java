@@ -11,6 +11,9 @@ import ru.practicum.service.CompilationService;
 
 import java.util.List;
 
+/**
+ * Публичный API для работы с подборками событий.
+ */
 @RestController
 @RequestMapping("/compilations")
 @RequiredArgsConstructor
@@ -18,6 +21,15 @@ public class PublicCompilationController {
 
     private final CompilationService compilationService;
 
+    /**
+     * Получение подборок событий.
+     * В случае, если по заданным фильтрам не найдено ни одной подборки, возвращает пустой список
+     *
+     * @param pinned искать только закрепленные/не закрепленные подборки
+     * @param from   количество элементов, которые нужно пропустить для формирования текущего набора (по умолчанию: 0)
+     * @param size   количество элементов в наборе (по умолчанию: 10)
+     * @return список подборок событий.
+     */
     @GetMapping
     public List<CompilationDto> getCompilations(
             @RequestParam(required = false) Boolean pinned,
@@ -26,6 +38,14 @@ public class PublicCompilationController {
         return compilationService.getCompilations(pinned, from, size);
     }
 
+    /**
+     * Получение подборки событий по его id.
+     * В случае, если подборки с заданным id не найдено, возвращает статус код 404.
+     *
+     * @param compId id подборки
+     * @return объект CompilationDto
+     * @throws ru.practicum.exception.NotFoundException если подборка не найдена
+     */
     @GetMapping("/{compId}")
     public CompilationDto getCompilation(@PathVariable Long compId) {
         return compilationService.getCompilationById(compId);

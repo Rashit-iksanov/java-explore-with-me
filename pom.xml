@@ -153,4 +153,16 @@
             </build>
         </profile>
     </profiles>
+
+    <!-- ДОБАВЛЕНО: Управление версиями зависимостей для дочерних модулей -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <version>2.6.0</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
 </project>

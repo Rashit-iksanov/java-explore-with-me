@@ -19,6 +19,10 @@ import ru.practicum.validation.OnCreate;
 
 import java.util.List;
 
+/**
+ * API для управления пользователями.
+ * Позволяет создавать, просматривать и удалять пользователей системы.
+ */
 @RestController
 @RequestMapping("/admin/users")
 @RequiredArgsConstructor
@@ -26,12 +30,28 @@ public class AdminUserController {
 
     private final UserService userService;
 
+    /**
+     * Добавление нового пользователя.
+     *
+     * @param request данные добавляемого пользователя (имя и email)
+     * @return объект UserDto с присвоенным идентификатором
+     * @throws ru.practicum.exception.ConflictException если пользователь с таким email уже существует
+     */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public UserDto createUser(@Validated(OnCreate.class) @RequestBody NewUserRequest request) {
         return userService.createUser(request);
     }
 
+    /**
+     * Получение информации о пользователях.
+     * Возвращает информацию обо всех пользователях или о конкретных по указанным идентификаторам.
+     *
+     * @param ids  список id пользователей
+     * @param from количество элементов, которые нужно пропустить для формирования текущего набора (по умолчанию 0)
+     * @param size количество элементов в наборе (по умолчанию 10)
+     * @return список объектов UserDto
+     */
     @GetMapping
     public List<UserDto> getUsers(
             @RequestParam(required = false) List<Long> ids,
@@ -40,6 +60,12 @@ public class AdminUserController {
         return userService.getUsers(ids, from, size);
     }
 
+    /**
+     * Удаление пользователя.
+     *
+     * @param userId id пользователя
+     * @throws ru.practicum.exception.NotFoundException если пользователь не найден
+     */
     @DeleteMapping("/{userId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteUser(@PathVariable Long userId) {

@@ -1,5 +1,8 @@
 package ru.practicum.dto.enums;
 
+/**
+ * Изменение состояния события
+ */
 public enum StateAction {
     PUBLISH_EVENT,    // Опубликовать событие (админ)
     REJECT_EVENT,     // Отклонить событие (админ)
