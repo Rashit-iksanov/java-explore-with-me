@@ -159,6 +159,9 @@ public class EventServiceImpl implements EventService {
         if (size != null && size <= 0) {
             throw new ValidationException("Параметр 'size' должен быть больше 0");
         }
+        if (rangeStart != null && rangeEnd != null && rangeStart.isAfter(rangeEnd)) {
+            throw new ValidationException("Дата начала не может быть позже даты окончания");
+        }
 
         LocalDateTime start = (rangeStart == null) ? LocalDateTime.now().minusYears(1) : rangeStart;
         LocalDateTime end = (rangeEnd == null) ? LocalDateTime.now().plusYears(10) : rangeEnd;
@@ -231,9 +234,11 @@ public class EventServiceImpl implements EventService {
         if (size != null && size <= 0) {
             throw new ValidationException("Параметр 'size' должен быть больше 0");
         }
-
         if (sort != null && !sort.equals("EVENT_DATE") && !sort.equals("VIEWS")) {
             throw new ValidationException("Недопустимое значение параметра sort. Допустимые значения: EVENT_DATE, VIEWS");
+        }
+        if (rangeStart != null && rangeEnd != null && rangeStart.isAfter(rangeEnd)) {
+            throw new ValidationException("Дата начала не может быть позже даты окончания");
         }
 
         LocalDateTime start = (rangeStart == null) ? LocalDateTime.now() : rangeStart;
