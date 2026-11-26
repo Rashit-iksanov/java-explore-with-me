@@ -226,6 +226,10 @@ public class EventServiceImpl implements EventService {
 
         String searchText = (text != null && !text.isBlank()) ? text.toLowerCase() : "";
 
+        if (sort != null && !sort.equals("EVENT_DATE") && !sort.equals("VIEWS")) {
+            throw new ValidationException("Недопустимое значение параметра sort. Допустимые значения: EVENT_DATE, VIEWS");
+        }
+
         List<Event> events = eventRepository.findPublishedWithFilters(
                 searchText, safeCategories, paid, start, end, Pageable.unpaged());
 
