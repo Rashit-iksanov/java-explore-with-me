@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import ru.practicum.validation.OnCreate;
 
 import java.util.Set;
 
@@ -34,6 +33,6 @@ public class UpdateCompilationRequest {
      * Заголовок подборки
      * Пример: Необычные фотозоны
      */
-    @Size(min = 1, max = 50, groups = OnCreate.class)
+    @Size(min = 1, max = 50)
     private String title;
 }
