@@ -72,7 +72,7 @@ public class NewEventDto {
      * Пример: 10
      * По умолчанию: 0
      */
-    @Min(value = 0, message = "participantLimit must be >= 0")
+    @Min(value = 0, message = "participantLimit must be >= 0", groups = OnCreate.class)
     private Integer participantLimit = 0;
 
     /**

@@ -26,7 +26,7 @@ public class UpdateEventUserRequest {
      * Новая аннотация
      * Пример: Сап прогулки по рекам и каналам – это возможность увидеть Практикбург с другого ракурса
      */
-    @Size(min = 20, max = 2000, groups = OnCreate.class)
+    @Size(min = 20, max = 2000)
     private String annotation;
 
     /**
@@ -41,7 +41,7 @@ public class UpdateEventUserRequest {
      * в котором серфер, стоя на доске, катается на волнах и при этом гребет веслом, а не руками,
      * как в классическом серфинге.
      */
-    @Size(min = 20, max = 7000, groups = OnCreate.class)
+    @Size(min = 20, max = 7000)
     private String description;
 
     /**
@@ -85,6 +85,6 @@ public class UpdateEventUserRequest {
      * Новый заголовок
      * Пример: Сап прогулки по рекам и каналам
      */
-    @Size(min = 3, max = 120, groups = OnCreate.class)
+    @Size(min = 3, max = 120)
     private String title;
 }
