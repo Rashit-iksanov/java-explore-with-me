@@ -74,11 +74,17 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<EventShortDto> getUserEvents(Long userId, Integer from, Integer size) {
+        if (from != null && from < 0) {
+            throw new ValidationException("Параметр 'from' должен быть больше или равен 0");
+        }
+        if (size != null && size <= 0) {
+            throw new ValidationException("Параметр 'size' должен быть больше 0");
+        }
 
-        int safeSize = (size != null && size > 0) ? size : 10;
-        int safeFrom = (from != null && from >= 0) ? from : 0;
+        int actualFrom = (from == null) ? 0 : from;
+        int actualSize = (size == null) ? 10 : size;
 
-        Pageable pageable = PageRequest.of(safeFrom / safeSize, safeSize);
+        Pageable pageable = PageRequest.of(actualFrom / actualSize, actualSize);
 
         List<Event> events = eventRepository.findByInitiatorId(userId, pageable);
         Map<Long, Long> viewsMap = getViewsMap(events);
@@ -147,6 +153,13 @@ public class EventServiceImpl implements EventService {
     public List<EventFullDto> getAdminEvents(List<Long> users, List<State> states, List<Long> categories,
                                              LocalDateTime rangeStart, LocalDateTime rangeEnd,
                                              Integer from, Integer size) {
+        if (from != null && from < 0) {
+            throw new ValidationException("Параметр 'from' должен быть больше или равен 0");
+        }
+        if (size != null && size <= 0) {
+            throw new ValidationException("Параметр 'size' должен быть больше 0");
+        }
+
         LocalDateTime start = (rangeStart == null) ? LocalDateTime.now().minusYears(1) : rangeStart;
         LocalDateTime end = (rangeEnd == null) ? LocalDateTime.now().plusYears(10) : rangeEnd;
 
@@ -219,16 +232,16 @@ public class EventServiceImpl implements EventService {
             throw new ValidationException("Параметр 'size' должен быть больше 0");
         }
 
+        if (sort != null && !sort.equals("EVENT_DATE") && !sort.equals("VIEWS")) {
+            throw new ValidationException("Недопустимое значение параметра sort. Допустимые значения: EVENT_DATE, VIEWS");
+        }
+
         LocalDateTime start = (rangeStart == null) ? LocalDateTime.now() : rangeStart;
         LocalDateTime end = (rangeEnd == null) ? LocalDateTime.now().plusYears(10) : rangeEnd;
 
         List<Long> safeCategories = (categories != null && categories.isEmpty()) ? null : categories;
 
         String searchText = (text != null && !text.isBlank()) ? text.toLowerCase() : "";
-
-        if (sort != null && !sort.equals("EVENT_DATE") && !sort.equals("VIEWS")) {
-            throw new ValidationException("Недопустимое значение параметра sort. Допустимые значения: EVENT_DATE, VIEWS");
-        }
 
         List<Event> events = eventRepository.findPublishedWithFilters(
                 searchText, safeCategories, paid, start, end, Pageable.unpaged());
