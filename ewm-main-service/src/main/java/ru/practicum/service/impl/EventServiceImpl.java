@@ -212,6 +212,13 @@ public class EventServiceImpl implements EventService {
                                                Boolean onlyAvailable, String sort, Integer from, Integer size,
                                                String ip, String uri) {
 
+        if (from != null && from < 0) {
+            throw new ValidationException("Параметр 'from' должен быть больше или равен 0");
+        }
+        if (size != null && size <= 0) {
+            throw new ValidationException("Параметр 'size' должен быть больше 0");
+        }
+
         LocalDateTime start = (rangeStart == null) ? LocalDateTime.now() : rangeStart;
         LocalDateTime end = (rangeEnd == null) ? LocalDateTime.now().plusYears(10) : rangeEnd;
 
