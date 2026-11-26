@@ -177,15 +177,15 @@ public class EventServiceImpl implements EventService {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Event with id=" + eventId + " was not found"));
 
+        if (request.getEventDate() != null && request.getEventDate().isBefore(LocalDateTime.now().plusHours(1))) {
+            throw new ValidationException("Event date must be at least 1 hour from now");
+        }
+
         if (request.getStateAction() != null) {
             if (request.getStateAction() == StateAction.PUBLISH_EVENT) {
                 if (event.getState() != State.PENDING) {
                     throw new ConflictException("Cannot publish event because it's not in the right state: " +
                             event.getState());
-                }
-                if (request.getEventDate() != null && request.getEventDate()
-                        .isBefore(LocalDateTime.now().plusHours(1))) {
-                    throw new ValidationException("Event date must be at least 1 hour from now");
                 }
                 event.setState(State.PUBLISHED);
                 event.setPublishedOn(LocalDateTime.now());
