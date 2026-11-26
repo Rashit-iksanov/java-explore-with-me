@@ -18,8 +18,8 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             "WHERE (:users IS NULL OR e.initiator.id IN :users) " +
             "AND (:states IS NULL OR e.state IN :states) " +
             "AND (:categories IS NULL OR e.category.id IN :categories) " +
-            "AND (:rangeStart IS NULL OR e.eventDate >= :rangeStart) " +
-            "AND (:rangeEnd IS NULL OR e.eventDate <= :rangeEnd)")
+            "AND e.eventDate >= :rangeStart " +
+            "AND e.eventDate <= :rangeEnd")
     List<Event> findAllWithFilters(
             @Param("users") List<Long> users,
             @Param("states") List<State> states,
@@ -32,12 +32,12 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     // Public API: поиск опубликованных событий с фильтрацией
     @Query("SELECT e FROM Event e " +
             "WHERE e.state = 'PUBLISHED' " +
-            "AND (:text IS NULL OR LOWER(e.annotation) LIKE '%' || :text || '%' " +
+            "AND (:text = '' OR LOWER(e.annotation) LIKE '%' || :text || '%' " +
             "     OR LOWER(e.description) LIKE '%' || :text || '%') " +
             "AND (:categories IS NULL OR e.category.id IN :categories) " +
             "AND (:paid IS NULL OR e.paid = :paid) " +
-            "AND (:rangeStart IS NULL OR e.eventDate >= :rangeStart) " +
-            "AND (:rangeEnd IS NULL OR e.eventDate <= :rangeEnd)")
+            "AND e.eventDate >= :rangeStart " +
+            "AND e.eventDate <= :rangeEnd")
     List<Event> findPublishedWithFilters(
             @Param("text") String text,
             @Param("categories") List<Long> categories,

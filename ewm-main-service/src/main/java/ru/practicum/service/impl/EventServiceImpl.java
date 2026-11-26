@@ -147,20 +147,17 @@ public class EventServiceImpl implements EventService {
     public List<EventFullDto> getAdminEvents(List<Long> users, List<State> states, List<Long> categories,
                                              LocalDateTime rangeStart, LocalDateTime rangeEnd,
                                              Integer from, Integer size) {
-        if (rangeStart == null) {
-            rangeStart = LocalDateTime.now().minusYears(1);
-        }
-        if (rangeEnd == null) {
-            rangeEnd = LocalDateTime.now().plusYears(10);
-        }
+        LocalDateTime start = (rangeStart == null) ? LocalDateTime.now().minusYears(1) : rangeStart;
+        LocalDateTime end = (rangeEnd == null) ? LocalDateTime.now().plusYears(10) : rangeEnd;
 
-        if (users != null && users.isEmpty()) users = null;
-        if (states != null && states.isEmpty()) states = null;
-        if (categories != null && categories.isEmpty()) categories = null;
+        List<Long> safeUsers = (users != null && users.isEmpty()) ? null : users;
+        List<State> safeStates = (states != null && states.isEmpty()) ? null : states;
+        List<Long> safeCategories = (categories != null && categories.isEmpty()) ? null : categories;
 
         Pageable pageable = PageRequest.of(from / size, size);
-        List<Event> events = eventRepository.findAllWithFilters(users, states, categories, rangeStart,
-                rangeEnd, pageable);
+        List<Event> events = eventRepository.findAllWithFilters(
+                safeUsers, safeStates, safeCategories, start, end, pageable);
+
         Map<Long, Long> viewsMap = getViewsMap(events);
         Map<Long, Long> confirmedMap = getConfirmedRequestsMap(events);
 
@@ -215,21 +212,15 @@ public class EventServiceImpl implements EventService {
                                                Boolean onlyAvailable, String sort, Integer from, Integer size,
                                                String ip, String uri) {
 
-        if (rangeStart == null) {
-            rangeStart = LocalDateTime.now();
-        }
-        if (rangeEnd == null) {
-            rangeEnd = LocalDateTime.now().plusYears(10);
-        }
+        LocalDateTime start = (rangeStart == null) ? LocalDateTime.now() : rangeStart;
+        LocalDateTime end = (rangeEnd == null) ? LocalDateTime.now().plusYears(10) : rangeEnd;
 
-        if (categories != null && categories.isEmpty()) {
-            categories = null;
-        }
+        List<Long> safeCategories = (categories != null && categories.isEmpty()) ? null : categories;
 
-        String searchText = (text != null && !text.isBlank()) ? text.toLowerCase() : null;
+        String searchText = (text != null && !text.isBlank()) ? text.toLowerCase() : "";
 
         List<Event> events = eventRepository.findPublishedWithFilters(
-                searchText, categories, paid, rangeStart, rangeEnd, Pageable.unpaged());
+                searchText, safeCategories, paid, start, end, Pageable.unpaged());
 
         Map<Long, Long> viewsMap = getViewsMap(events);
         Map<Long, Long> confirmedMap = getConfirmedRequestsMap(events);
@@ -335,7 +326,7 @@ public class EventServiceImpl implements EventService {
                     event.getCreatedOn() != null ? event.getCreatedOn() : LocalDateTime.now().minusYears(1),
                     LocalDateTime.now(),
                     Collections.singletonList("/events/" + event.getId()),
-                    false
+                    true
             );
             return stats.isEmpty() ? 0L : stats.get(0).getHits();
         } catch (Exception e) {
