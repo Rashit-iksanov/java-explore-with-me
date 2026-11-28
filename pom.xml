@@ -24,6 +24,7 @@
     <properties>
         <java.version>21</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <example.version>2.6.0</example.version>
     </properties>
 
     <build>
@@ -160,7 +161,7 @@
             <dependency>
                 <groupId>org.springdoc</groupId>
                 <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-                <version>2.6.0</version>
+                <version>${example.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

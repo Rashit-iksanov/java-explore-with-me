@@ -54,18 +54,23 @@ public class CompilationServiceImpl implements CompilationService {
 
     @Override
     public List<CompilationDto> getCompilations(Boolean pinned, Integer from, Integer size) {
-
         int safeSize = (size != null && size > 0) ? size : 10;
         int safeFrom = (from != null && from >= 0) ? from : 0;
 
         Pageable pageable = PageRequest.of(safeFrom / safeSize, safeSize);
 
-        return compilationRepository.findAllWithFilters(pinned, pageable).stream()
-                .map(comp -> {
-                    Map<Long, Long> viewsMap = getViewsMap(comp.getEvents());
-                    Map<Long, Long> confirmedMap = getConfirmedRequestsMap(comp.getEvents());
-                    return CompilationMapper.toCompilationDto(comp, viewsMap, confirmedMap);
-                })
+        List<Compilation> compilations = compilationRepository.findAllWithFilters(pinned, pageable);
+
+        Set<Event> allEvents = compilations.stream()
+                .filter(comp -> comp.getEvents() != null && !comp.getEvents().isEmpty())
+                .flatMap(comp -> comp.getEvents().stream())
+                .collect(Collectors.toSet());
+
+        Map<Long, Long> viewsMap = getViewsMap(allEvents);
+        Map<Long, Long> confirmedMap = getConfirmedRequestsMap(allEvents);
+
+        return compilations.stream()
+                .map(comp -> CompilationMapper.toCompilationDto(comp, viewsMap, confirmedMap))
                 .collect(Collectors.toList());
     }
 
